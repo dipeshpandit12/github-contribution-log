@@ -1,15 +1,15 @@
-# Contribution [#]: [Issue Title]
+# Contribution [#]: [bug(mat-selection-list): disabled selection list still shows cursor pointer on hover around radio]
 
-**Contribution Number:** [1 / 2 / 3]  
-**Student:** [Your Name]  
-**Issue:** [GitHub issue link]  
-**Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
+**Contribution Number:** [1]  
+**Student:** [Dipesh Pandit]  
+**Issue:** [https://github.com/angular/components/issues/31937]  
+**Status:** [Phase I] [Complete]
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+I chose this issue because it directly aligns with my current technical background and academic experience. Last semester, I worked extensively on a project using the Angular framework, which allowed me to build a strong foundational knowledge of its architecture. Additionally, my programming background includes experience with JavaScript and TypeScript, making the Angular Components codebase a natural fit for my skills. Furthermore, the repository's active open-source community and exceptionally clear contribution documentation provide an ideal environment for me to learn enterprise engineering standards.
 
 ---
 
