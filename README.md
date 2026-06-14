@@ -69,20 +69,23 @@ I set up the project locally from my fork of the `angular/components` repository
 
 Using UMPIRE framework (adapted):
 
-**Understand:** [Restate the problem]
+**Understand:** The issue is that a disabled `mat-list-option` in a single-selection `mat-selection-list` still shows a pointer cursor when hovering over its radio indicator. This makes the disabled option look clickable even though it cannot be selected. The disabled radio indicator should use the default cursor, matching the disabled behavior in the multiple-selection list.
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+**Match:** The multiple-selection list already behaves correctly because it uses a checkbox-style indicator. In `src/material/checkbox/_checkbox-common.scss`, disabled checkboxes use `.mdc-checkbox--disabled` to set `cursor: default` and remove pointer behavior. The single-selection list uses the radio styles from `src/material/radio/_radio-common.scss`, where `.mdc-radio` sets `cursor: pointer`, but the disabled list option does not override that cursor.
 
 **Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+1. Inspect the rendered DOM for the disabled `Strawberries` option to confirm the disabled option and nested radio classes.
+2. Modify `src/material/list/list-option.scss` or `src/material/list/list.scss` to override the nested `.mdc-radio` cursor when the parent `mat-list-option` is disabled.
+3. Keep the change scoped to disabled selection-list radio indicators so normal radio buttons are not affected.
+4. Add or update a focused test if the list test setup supports checking this style behavior.
+5. Run the local dev app and focused list tests to confirm the fix.
 
-**Implement:** [Link to your branch/commits as you work]
+**Implement:** Implementation will happen in Phase III on this branch:  
+https://github.com/dipeshpandit12/components/tree/fix-button-disabled-state
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
+**Review:** I will review the change against `CONTRIBUTING.md` to make sure the fix is focused, uses the project’s existing style patterns, and follows the Angular commit message format. I will also check that I do not include unrelated files such as `.devcontainer/` or temporary local files. The expected final code commit message would be similar to `fix(material/list): remove pointer cursor from disabled radio option`.
 
-**Evaluate:** [How will you verify it works?]
+**Evaluate:** I will verify the fix manually by running `pnpm dev-app`, opening `/list`, and hovering over the disabled `Strawberries` radio indicator in the `Single Selection list`. The cursor should no longer change to a pointer for the disabled option, while enabled options should still behave normally. I will also run `pnpm test list` to confirm the focused list tests pass.
 
 ---
 
