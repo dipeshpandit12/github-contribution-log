@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Dipesh Pandit]  
 **Issue:** [https://github.com/angular/components/issues/31937]  
-**Status:** [Phase I] [Complete]
+**Status:** [Phase II] [Complete]
 
 ---
 
@@ -17,19 +17,19 @@ I chose this issue because it directly aligns with my current technical backgrou
 
 ### Problem Description
 
-[In your own words, what's broken or missing?]
+In a single-selection mat-selection-list, a disabled option still shows a pointer cursor when hovering over its radio button. This makes the disabled option look like it can be clicked. The issue happens with the disabled "Stawberries" option in the list demo.
 
 ### Expected Behavior
 
-[What should happen?]
+A disabled list option should not show a pointer cursor. It should look and behave like a disabled item. Users should understand that the option cannot be selected.
 
 ### Current Behavior
 
-[What actually happens?]
+The disabled option cannot be selected, but the cursor still changes to a pointer over the radio button. This gives the wrong impression that the option is clickable. The issue only happens in the single-selection list.
 
 ### Affected Components
 
-[Which parts of the codebase are involved?]
+The main affected area is the Angular Material list component, especially mat-selection-list and mat-list-option. The relevant files are src/material/list/list-option.scss, src/material/list/list.scss, and src/material/radio/_radio-common.scss. The issue likely comes from the radio indicator styles being reused in single-selection lists without applying a disabled cursor override.
 
 ---
 
@@ -37,19 +37,21 @@ I chose this issue because it directly aligns with my current technical backgrou
 
 ### Environment Setup
 
-[Notes on setting up your local development environment - challenges you faced, how you solved them]
+I set up the project locally from my fork of the `angular/components` repository and created a working branch for the issue. I followed the step from DEV_ENVIRONMENT.md file. One challenge I faced was that the project requires `pnpm`, but it was not installed or available correctly in my local environment at first. I solved this by installing/enabling `pnpm`, then ran `pnpm i` to install the project dependencies and `pnpm dev-app` to start the local Angular Material dev app.
 
 ### Steps to Reproduce
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. Run the local dev app with `pnpm dev-app`.
+2. Open the dev app in the browser and navigate to `/list`.
+3. Scroll down to the `Single Selection list` section.
+4. Hover over the radio indicator next to the disabled `Strawberries` option.
+5. Observe that the cursor changes to a pointer even though the option is disabled.
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [Link to commit in your fork]
+- **Commit showing reproduction:** [https://github.com/dipeshpandit12/components/tree/fix-button-disabled-state]
 - **Screenshots/logs:** [If applicable]
-- **My findings:** [What you discovered during reproduction]
+- **My findings:** The issue happens only in single-selection mode because it uses a radio-style indicator. The multiple-selection checkbox indicator already handles the disabled cursor correctly.
 
 ---
 
