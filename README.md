@@ -50,7 +50,9 @@ I set up the project locally from my fork of the `angular/components` repository
 ### Reproduction Evidence
 
 - **Commit showing reproduction:** [https://github.com/dipeshpandit12/components/tree/fix-button-disabled-state]
-- **Screenshots/logs:** [If applicable]
+- **Screenshots/logs:**
+![Reproduction screenshot 1](IMG_8338.HEIC)
+![Reproduction screenshot 2](IMG_8337.HEIC)
 - **My findings:** The issue happens only in single-selection mode because it uses a radio-style indicator. The multiple-selection checkbox indicator already handles the disabled cursor correctly.
 
 ---
