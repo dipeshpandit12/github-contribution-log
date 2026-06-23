@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Dipesh Pandit]  
 **Issue:** [https://github.com/angular/components/issues/31937]  
-**Status:** [Phase II] [Complete]
+**Status:** [Phase III] [Complete]
 
 ---
 
