@@ -61,11 +61,26 @@ I set up the project locally from my fork of the `angular/components` repository
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+The root cause is in the shared radio "structure" styles. The `radio-structure` mixin in `src/material/radio/_radio-common.scss` unconditionally sets `cursor: pointer` on the `.mdc-radio` element. Because the selection list reuses this mixin (it is included under `.mat-mdc-list-option` in `src/material/list/list-option.scss`), every single-selection option's radio indicator inherits `cursor: pointer`.
+
+The radio's own disabled cursor reset (`cursor: default`) only applies via the `.mdc-radio__native-control:disabled` selector. But inside a list option that native `<input>` is set to `display: none` (it is purely decorative and removed from the tab order), and the disabled state is instead represented by the `.mdc-list-item--disabled` class on the host `.mat-mdc-list-option` element. As a result, the disabled-cursor rule never matches, and the disabled radio keeps the pointer cursor — making the option look clickable.
+
+The multiple-selection list does not show the bug because its checkbox indicator already handles the disabled cursor.
 
 ### Proposed Solution
 
-[High-level description of your fix approach]
+Add a scoped override in `src/material/list/list.scss` that resets the indicator cursor to `default` for disabled list options:
+
+```scss
+.mat-mdc-list-option.mdc-list-item--disabled {
+  .mdc-radio,
+  .mdc-checkbox {
+    cursor: default;
+  }
+}
+```
+
+The override is intentionally placed on the existing disabled-indicator block (which already adjusts `opacity`) and is scoped with both the `.mat-mdc-list-option` host class and the `.mdc-list-item--disabled` state class. This gives it specificity (0,3,0), which is required to win over the structure styles' `.mat-mdc-list-option .mdc-radio { cursor: pointer; }` rule at (0,2,0) — an equal-specificity rule would lose on source order. The change is limited to disabled list options, so standalone radios and enabled options are unaffected.
 
 ### Implementation Plan
 
@@ -95,36 +110,45 @@ https://github.com/dipeshpandit12/components/tree/fix-button-disabled-state
 
 ### Unit Tests
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+Added a focused regression test in `src/material/list/selection-list.spec.ts` (describe block `with single selection and a disabled option`). It renders a single-selection `mat-selection-list` with one enabled and one disabled option and asserts the computed cursor of each option's `.mdc-radio` indicator, following the existing `getComputedStyle(...).cursor` pattern used in `slider.spec.ts` and `select.spec.ts`.
+
+- [x] Test case 1: A disabled option's radio indicator computes `cursor: default` (the fix).
+- [x] Test case 2: An enabled option's radio indicator still computes `cursor: pointer` (guards against over-broad regression — normal options unaffected).
+
+This test fails before the fix (`Expected 'pointer' to be 'default'`) and passes after, so it is a true regression test for the bug. It also caught a real defect in my first attempt at the fix: my initial selector tied the specificity battle with the structure styles and lost, so the cursor stayed `pointer`. The failing test forced me to raise the specificity to the correct value.
 
 ### Integration Tests
 
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+- Not applicable. This is a CSS/styling fix in a single component; no cross-component integration behavior changes.
 
 ### Manual Testing
 
-[What you tested manually and results]
+- Ran `pnpm stylelint src/material/list/list.scss` → passes (exit 0, no violations).
+- Ran `pnpm test list --no-watch` → full list unit suite passes (119 tests, including the new one).
+- Pending visual check via `pnpm dev-app` at `/list` (Single Selection list): confirm hovering the disabled "Strawberries" radio indicator no longer shows a pointer cursor, while enabled options still show the pointer. (The automated test already asserts this computed behavior.)
 
 ---
 
 ## Implementation Notes
 
-### Week [X] Progress
+### Week of 2026-06-22 Progress
 
-[What you built this week, challenges faced, decisions made]
-
-### Week [Y] Progress
-
-[Continue documenting as you work]
+- Confirmed the root cause: the `radio-structure` mixin sets `cursor: pointer` on `.mdc-radio`, and the radio's disabled-cursor reset can't apply in a list option because the native control is `display: none` and the disabled state lives on the `.mdc-list-item--disabled` host class.
+- Implemented the fix in `src/material/list/list.scss` by extending the existing disabled-indicator block and committed it on its own.
+- Wrote a focused regression test in `selection-list.spec.ts` and ran the list suite.
+- **Challenge:** the first version of the fix didn't work — the test failed with `Expected 'pointer' to be 'default'`. The cause was a CSS specificity tie: my override `.mdc-list-item--disabled .mdc-radio` (0,2,0) matched the same specificity as the structure rule `.mat-mdc-list-option .mdc-radio` (0,2,0), so the pointer rule won on source order.
+- **Resolution:** scoped the override to `.mat-mdc-list-option.mdc-list-item--disabled .mdc-radio` (0,3,0) so it reliably wins. I then amended the fix commit so the corrected selector ships in a single clean fix commit, with the test as a separate commit.
+- **Decision:** kept the change in `list.scss` (not in the shared radio mixin) so standalone radio buttons are untouched and the fix stays scoped to disabled selection-list options.
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+- **Files modified:**
+  - `src/material/list/list.scss` — scoped the disabled-indicator block to `.mat-mdc-list-option.mdc-list-item--disabled` and added `cursor: default` for the nested `.mdc-radio` / `.mdc-checkbox`.
+  - `src/material/list/selection-list.spec.ts` — added the `with single selection and a disabled option` regression test and its test component.
+- **Key commits (branch `fix-button-disabled-state`):**
+  - `fix(material/list): remove pointer cursor from disabled radio option`
+  - `test(material/list): verify disabled option resets indicator cursor`
+- **Approach decisions:** Reused the existing disabled-indicator block rather than adding a new rule (DRY, and behavior-neutral for the existing `opacity` since only options contain these indicators). Raised specificity via the host class instead of `!important`. Excluded the unrelated `.devcontainer/devcontainer.json` from the fix commit per the project's "only relevant changes" guidance.
 
 ---
 
