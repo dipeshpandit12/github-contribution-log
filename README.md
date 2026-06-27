@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Dipesh Pandit]  
 **Issue:** [https://github.com/angular/components/issues/31937]  
-**Status:** [Phase III] [Complete]
+**Status:** [Phase IV] [Complete]
 
 ---
 
@@ -154,15 +154,22 @@ This test fails before the fix (`Expected 'pointer' to be 'default'`) and passes
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** Not opened upstream — issue #31937 was already fixed and closed by
+[angular/components#33418](https://github.com/angular/components/pull/33418)
+before submission. Opening a new PR would be a duplicate.
 
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+**What I contributed (1–2 sentences):** I independently reproduced and fixed the
+disabled selection-list radio cursor bug (scoped `cursor: default` override in
+`list.scss`) and added a regression test in `selection-list.spec.ts`. My
+root-cause analysis matched the maintainer's merged fix (#33418).
 
-**Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+**Maintainer Feedback / Next steps:**
+- 2026-06-27: On checking the issue before submitting, found it already resolved
+  upstream via #33418 (merged 2026-06-18). No PR submitted to avoid a duplicate.
+- Work retained on my fork branch as the contribution artifact.
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** Resolved upstream (superseded) — my equivalent fix is preserved on my
+fork; no separate PR is warranted.
 
 ---
 
@@ -170,15 +177,24 @@ This test fails before the fix (`Expected 'pointer' to be 'default'`) and passes
 
 ### Technical Skills Gained
 
-[What you learned technically]
+- Tracing a styling bug from a visible symptom to a shared SCSS mixin.
+- Reasoning about CSS specificity to make an override reliably win
+  (0,3,0 vs 0,2,0) instead of reaching for `!important`.
+- Writing a computed-style regression test with `getComputedStyle(...).cursor`.
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+- A CSS specificity tie made my first fix silently fail; the regression test
+  surfaced it and pointed me to the host-class scoping that fixed it.
+- Late-stage discovery that the issue was already merged upstream — handled by
+  verifying the upstream commit and documenting the duplicate honestly rather
+  than submitting a conflicting PR.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+- **Check the issue's current status and any linked/recent PRs immediately
+  before implementing**, and keep the branch rebased on the latest upstream so I
+  catch an in-flight maintainer fix early.
 
 ---
 
