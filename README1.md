@@ -15,7 +15,9 @@ The Azure Developer CLI (`azd`) reaches out to a number of external services at 
 
 ## Why I Chose This Issue
 
-I chose this issue because it is well-scoped for a first contribution and has a clear finish line. It is labeled `good first issue` and `help wanted`, is open and unassigned, and asks for a bounded deliverable — a documented list of the external hosts `azd` requires — rather than an open-ended refactor. That makes it something I can fully understand, research, and complete within the program timeline.
+As an IT intern, I use Azure to implement AI solutions for process automation. This issue aligns directly with my current professional work, making it a highly relevant contribution — I regularly work inside the Azure ecosystem, so improving the documentation around `azd` is something that has immediate value both to me and to teams like mine.
+
+Beyond the personal relevance, it is well-scoped for a first contribution and has a clear finish line. It is labeled `good first issue` and `help wanted`, is open and unassigned, and asks for a bounded deliverable — a documented list of the external hosts `azd` requires — rather than an open-ended refactor. That makes it something I can fully understand, research, and complete within the program timeline.
 
 It also matches my learning goals. Producing this documentation means reading through the `azd` codebase to trace where network calls are made (ARM, telemetry, and experimentation endpoints), which is a great way to learn how a real production CLI is structured while making a contribution that has concrete value for teams deploying `azd` in restricted network environments. The Azure `azure-dev` repository is actively maintained and has clear contribution guidelines, which gives me a supportive environment to learn enterprise engineering standards.
 
