@@ -3,7 +3,7 @@
 **Contribution Number:** 2  
 **Student:** Dipesh Pandit  
 **Issue:** https://github.com/Azure/azure-dev/issues/4415  
-**Status:** Phase I — Complete
+**Status:** Phase II — Complete
 
 ---
 
@@ -27,19 +27,40 @@ It also matches my learning goals. Producing this documentation means reading th
 
 ### Problem Description
 
-[In your own words, what's broken or missing?]
+This is a **documentation gap**, not a code defect. `azd` connects to many external
+hosts at runtime — the Azure ARM control plane, Entra sign-in, Microsoft Graph,
+telemetry, a feature-experimentation service, tool-download sources, template and
+extension registries, and self-update endpoints. These hosts are hardcoded across
+many different Go source files, but there is **no single page** in the
+documentation that lists them. Anyone running `azd` behind a firewall or proxy has
+to reverse-engineer the allowlist by reading the source or watching network traffic.
 
 ### Expected Behavior
 
-[What should happen?]
+There should be one reference doc (in `docs/reference/`) that lists every
+well-known host `azd` may contact, grouped by category (control plane per Azure
+cloud, auth, telemetry, experimentation, tools, templates, extensions, self-update),
+with a copy-pasteable minimum allowlist for firewall configuration.
 
 ### Current Behavior
 
-[What actually happens?]
+No such page exists. Searching `docs/` for "firewall", "allowlist", "endpoint", or
+"host" returns nothing that catalogs the hosts. The endpoint constants live only in
+the source (e.g. `cli/azd/pkg/cloud/cloud.go`, `internal/telemetry/telemetry.go`,
+`cmd/middleware/experimentation.go`), scattered across ~20 files.
 
 ### Affected Components
 
-[Which parts of the codebase are involved?]
+Documentation only — the fix adds a new Markdown file under `docs/reference/` and
+links it from `docs/README.md`. No product code changes. The source files that
+*define* the hosts are the research inputs, not files to be modified:
+
+- `cli/azd/pkg/cloud/cloud.go` — per-cloud ARM / portal / storage / ACR / Key Vault suffixes
+- `cli/azd/pkg/graphsdk/graphsdk.go` — Microsoft Graph host
+- `cli/azd/internal/telemetry/telemetry.go` — Application Insights endpoints
+- `cli/azd/cmd/middleware/experimentation.go` — experimentation (TAS) endpoint
+- `cli/azd/pkg/tools/{bicep,github,pack}/…`, `pkg/project/container_helper.go` — tool + builder-image download hosts
+- `cli/azd/pkg/templates/…`, `pkg/extensions/manager.go`, `pkg/update/manager.go` — template, extension, and self-update hosts
 
 ---
 
@@ -47,19 +68,67 @@ It also matches my learning goals. Producing this documentation means reading th
 
 ### Environment Setup
 
-[Notes on setting up your local development environment - challenges you faced, how you solved them]
+- **OS:** macOS (darwin), zsh.
+- **Clone:** `git clone https://github.com/Azure/azure-dev.git` — cloned cleanly.
+- **Note on the toolchain:** the CLI is written in Go (`cli/azd/`). Go was not
+  installed on my machine, so I could not build/run the `azd` binary. For a
+  **documentation** issue this is not a blocker — reproducing the gap only
+  requires reading and searching the repository, not compiling it. (If I later
+  want to build the CLI to verify links, I would install Go via `brew install go`
+  and run `cd cli/azd && go build ./...`.)
+- **No other setup friction.** No dependency install, `.env`, or dev container was
+  needed to inspect the docs and source.
 
 ### Steps to Reproduce
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+Because this is a missing-documentation issue, "reproducing" it means confirming
+that (a) the docs contain no consolidated host list, and (b) the hosts really are
+scattered across the source. Anyone can follow these steps:
+
+1. Clone the repo and enter it:
+   ```bash
+   git clone https://github.com/Azure/azure-dev.git
+   cd azure-dev
+   ```
+2. Look for any existing firewall / allowlist / endpoints reference in the docs:
+   ```bash
+   ls docs/reference/
+   grep -ri "firewall\|allowlist\|allow-list\|endpoints to\|hosts to" docs/
+   ```
+   **Result:** `docs/reference/` contains `azure-yaml-schema.md`,
+   `environment-variables.md`, `feature-status.md`, and `telemetry-data.md` — but
+   **no** page that lists the hosts `azd` contacts. The grep returns no such catalog.
+3. Confirm the hosts exist and are spread across the source:
+   ```bash
+   grep -rn "management.azure.com\|login.microsoftonline\|applicationinsights.azure.com\|exp-tas.com\|downloads.bicep.azure.com" cli/azd --include=*.go | grep -v _test
+   ```
+   **Result:** matches appear in many different files (cloud config, telemetry,
+   experimentation middleware, tool downloaders, etc.), confirming there is no
+   single source of truth a firewall admin could consult.
+
+**Expected:** a documented, consolidated list of runtime hosts.
+**Actual:** no such document exists; the information is only discoverable by
+reading source across ~20 files.
+
+I ran the searches more than once against a fresh clone to confirm the result is
+consistent, not a fluke.
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [Link to commit in your fork]
-- **Screenshots/logs:** [If applicable]
-- **My findings:** [What you discovered during reproduction]
+- **Working branch (fork):** `fix-issue-4415` →
+  https://github.com/dipeshpandit12/azure-dev/tree/fix-issue-4415
+  (fork created under `dipeshpandit12`, branch pushed — the link resolves). The
+  branch is currently clean (based on `main`); the documentation itself is written
+  in Phase III per the assignment ("no finished code" in Phase II).
+- **My findings:** I traced every runtime host to its defining file and line. The
+  hosts fall into clear categories — per-cloud ARM/auth/portal/storage/ACR/Key Vault
+  suffixes (`pkg/cloud/cloud.go`), Microsoft Graph (hardcoded to *public* cloud even
+  for Gov/China clouds — a notable gotcha), Application Insights telemetry
+  (`internal/telemetry/telemetry.go`), the experimentation TAS service
+  (`cmd/middleware/experimentation.go`), tool downloads (Bicep, `gh`, `pack`, and the
+  `mcr.microsoft.com` builder image), template/extension registries (via `aka.ms`),
+  and self-update endpoints. This confirms the issue is valid and gives me the exact
+  content the new doc needs to contain.
 
 ---
 
@@ -67,49 +136,77 @@ It also matches my learning goals. Producing this documentation means reading th
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+The "root cause" here is simply that the documentation was never written. The
+information exists and is stable — the hosts are hardcoded constants — but it has
+never been collected into a user-facing reference. So the fix is a research +
+writing task: read the source, catalog the hosts by category, and publish a single
+reference page in the format the repo already uses for its other reference docs.
 
 ### Proposed Solution
 
-[High-level description of your fix approach]
+Add a new file, `docs/reference/network-endpoints.md`, that documents every
+well-known runtime host grouped by category, with per-cloud tables (AzureCloud,
+AzureUSGovernment, AzureChinaCloud) and a copy-pasteable minimum allowlist. Link
+it from the Reference section of `docs/README.md` so it is discoverable.
 
 ### Implementation Plan
 
 Using UMPIRE framework (adapted):
 
-**Understand:** [Restate the problem]
+**Understand:** `azd` contacts many external hosts at runtime, but there is no
+single documented list. Users in restricted networks need one place to find the
+hosts to allowlist. The deliverable is documentation, not code.
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+**Match:** The repo already has a strong pattern for reference docs. I'll mirror
+`docs/reference/telemetry-data.md` and `docs/reference/environment-variables.md`
+— same tone, Markdown table style, GitHub `[!NOTE]`/`[!IMPORTANT]` callouts, and
+relative links back into the source. New reference docs are indexed under the
+"Reference" heading of `docs/README.md`, and the "Where do new docs go?" table in
+that README confirms configuration references belong in `docs/reference/`.
 
-**Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+**Plan:**
+1. Add `docs/reference/network-endpoints.md` with sections for: Azure control
+   plane (per cloud), authentication, telemetry, experimentation, external-tool
+   downloads, templates, extensions, self-update, `aka.ms` redirector, CI/CD
+   provider hosts, and customer/deployment-target hosts.
+2. Include a per-cloud table (public / US Gov / China) and a copy-pasteable
+   "minimum allowlist" block for a typical `provision` + `deploy`.
+3. Cite the defining source file for each host so the doc stays verifiable.
+4. Add one link to the new page under the "Reference" section of `docs/README.md`.
 
-**Implement:** [Link to your branch/commits as you work]
+**Implement:** *(Phase III)* — branch `fix-issue-4415` in my fork:
+`https://github.com/dipeshpandit12/azure-dev/tree/fix-issue-4415`
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
+**Review:** Read `CONTRIBUTING.md` and `docs/README.md` conventions before opening
+the PR; match the existing reference-doc style; confirm all relative links resolve;
+follow the repo's commit-message convention (`docs(azd): …`). Since this is
+docs-only, I'll confirm there are no product-code changes in the diff.
 
-**Evaluate:** [How will you verify it works?]
+**Evaluate:** Verify every source-file link in the doc resolves to a real path;
+re-run the reproduction greps to confirm no host was missed; optionally build the
+CLI (`go build ./...`) only if I need to double-check a constant's value. Success =
+a reader can configure a firewall from this one page without reading source.
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests
+> This is a documentation-only change, so automated unit/integration tests do not
+> apply. "Testing" means verifying the doc is accurate and well-formed.
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+### Verification checklist (Phase III)
 
-### Integration Tests
-
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+- [ ] Every source-file link in the new doc resolves to a real path in the repo
+- [ ] Re-run the reproduction greps to confirm no runtime host was missed
+- [ ] Markdown renders correctly on GitHub (tables, callouts, code blocks)
+- [ ] Relative links from `docs/reference/` back into `cli/azd/…` are correct
+- [ ] `docs/README.md` links to the new page under "Reference"
 
 ### Manual Testing
 
-[What you tested manually and results]
+Spot-check a few host values against the source (e.g. confirm
+`cli/azd/pkg/cloud/cloud.go` and `internal/telemetry/telemetry.go` still contain
+the documented endpoints) so the doc matches the current code.
 
 ---
 
