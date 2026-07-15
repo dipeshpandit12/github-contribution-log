@@ -3,7 +3,8 @@
 **Contribution Number:** 2  
 **Student:** Dipesh Pandit  
 **Issue:** https://github.com/Azure/azure-dev/issues/4415  
-**Status:** Phase II — Complete
+**Pull Request:** https://github.com/Azure/azure-dev/pull/9165  
+**Status:** Phase IV — PR submitted, awaiting maintainer review
 
 ---
 
@@ -194,13 +195,14 @@ a reader can configure a firewall from this one page without reading source.
 > This is a documentation-only change, so automated unit/integration tests do not
 > apply. "Testing" means verifying the doc is accurate and well-formed.
 
-### Verification checklist (Phase III)
+### Verification checklist (Phase III) — completed
 
-- [ ] Every source-file link in the new doc resolves to a real path in the repo
-- [ ] Re-run the reproduction greps to confirm no runtime host was missed
-- [ ] Markdown renders correctly on GitHub (tables, callouts, code blocks)
-- [ ] Relative links from `docs/reference/` back into `cli/azd/…` are correct
-- [ ] `docs/README.md` links to the new page under "Reference"
+- [x] Every source-file link in the new doc resolves to a real path in the repo
+- [x] Re-run the reproduction greps to confirm no runtime host was missed
+- [x] Markdown renders correctly on GitHub (tables, callouts, code blocks)
+- [x] Relative links from `docs/reference/` back into `cli/azd/…` are correct
+- [x] `docs/README.md` links to the new page under "Reference"
+- [x] Spell-check (`cspell`) passes — new host-name terms added to `.vscode/cspell.misc.yaml` so CI does not flag them
 
 ### Manual Testing
 
@@ -210,35 +212,102 @@ the documented endpoints) so the doc matches the current code.
 
 ---
 
-## Implementation Notes
+## Implementation Notes (Phase III — Build)
 
-### Week [X] Progress
+### What I built
 
-[What you built this week, challenges faced, decisions made]
+I wrote a single new reference page, `docs/reference/network-endpoints.md`
+(~270 lines), that catalogs every well-known host `azd` may contact at runtime.
+The page is organized exactly the way I planned it in Phase II:
 
-### Week [Y] Progress
+- **Section 1 — Azure control plane (per cloud):** three tables (AzureCloud,
+  AzureUSGovernment, AzureChinaCloud) covering ARM, the Entra/AAD authority,
+  Microsoft Graph, the portal, and the storage / ACR / Key Vault suffixes.
+- **Sections for auth, telemetry, experimentation, external-tool downloads
+  (Bicep, `gh`, `pack`, the `mcr.microsoft.com` builder image), templates,
+  extensions, self-update, and CI/CD provider hosts.**
+- **A copy-pasteable "minimum allowlist"** for a typical `provision` + `deploy`
+  flow, which is the payoff a firewall admin actually needs.
+- Each host cites the **defining source file** (e.g.
+  `cli/azd/pkg/cloud/cloud.go`, `internal/telemetry/telemetry.go`) via a relative
+  link, so the doc stays verifiable against the code.
 
-[Continue documenting as you work]
+I matched the existing reference-doc conventions in the repo — the same table
+style, GitHub `[!NOTE]`/`[!IMPORTANT]` callouts, and relative source links used
+in `telemetry-data.md` and `environment-variables.md`.
+
+### Challenges / decisions
+
+- **cspell CI gate.** After my first local render I discovered the repo runs a
+  spell-checker in CI. The new host names (`usgovcloudapi`, `chinacloudapi`,
+  `azurecr`, etc.) tripped it. Rather than litter the doc with inline ignore
+  comments, I added the terms to the shared dictionary at
+  `.vscode/cspell.misc.yaml`, which is the pattern the project already uses.
+- **Microsoft Graph gotcha.** While tracing the source I confirmed the Graph host
+  is hardcoded to the *public* cloud (`graph.microsoft.com`) even for Gov/China
+  clouds. I called this out explicitly in the doc as a note so a Gov/China admin
+  isn't surprised.
+- **Runtime-constructed hosts.** Some hosts (storage, ACR, Key Vault) are suffixes
+  assembled at runtime from resource names. I documented these with a `<...>`
+  placeholder and a wildcard (e.g. `*.azurecr.io`) rather than pretending they are
+  fixed hostnames.
+- **No Go build needed.** As planned, this is a docs-only change, so I verified
+  host values by reading the source constants rather than compiling the CLI.
+
+### Version-control hygiene
+
+I worked on the `fix-issue-4415` branch off `main`, kept the change scoped to
+docs + the cspell dictionary (no product code touched), and used a single
+Conventional-Commits message with a `Fixes #4415` trailer so the PR auto-links
+and closes the issue on merge.
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+- **Files added/modified:**
+  - `docs/reference/network-endpoints.md` — **new** (270 lines) — the reference page.
+  - `docs/README.md` — +1 line — link to the new page under the "Reference" heading.
+  - `.vscode/cspell.misc.yaml` — +7 lines — host-name terms so CI spell-check passes.
+- **Key commit:** `d687faaac` — `docs: document runtime network endpoints azd contacts (#4415)`
+  (branch `fix-issue-4415`, pushed to my fork `dipeshpandit12/azure-dev`).
+- **Approach decisions:** mirror the existing reference-doc format instead of
+  inventing a new layout; cite source files for every host so the page is
+  verifiable; solve the cspell failure via the shared dictionary rather than
+  per-line suppressions.
 
 ---
 
-## Pull Request
+## Pull Request (Phase IV — Submit & Iterate)
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** https://github.com/Azure/azure-dev/pull/9165
 
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+I opened the pull request against `Azure/azure-dev:main` from
+`dipeshpandit12/azure-dev:fix-issue-4415`. Before submitting I re-read
+`CONTRIBUTING.md` and the `docs/README.md` conventions, confirmed the diff
+contains no product-code changes, and verified every relative link resolves.
+
+**PR Description (as submitted):**
+
+> **docs: document runtime network endpoints `azd` contacts**
+>
+> Fixes #4415.
+>
+> Adds `docs/reference/network-endpoints.md`, a single reference page cataloguing
+> the external hosts `azd` may contact at runtime — Azure control plane (per
+> cloud), authentication, telemetry, experimentation, tool downloads, templates,
+> extensions, self-update, and CI/CD provider hosts — plus a copy-pasteable
+> minimum allowlist for firewalled environments. Every host cites the source file
+> that defines it. The page is linked from the Reference section of
+> `docs/README.md`, and new host-name terms are added to the shared cspell
+> dictionary so CI spell-check passes.
+>
+> This is a documentation-only change; no product code is modified.
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- _2026-07-15:_ PR submitted; automated checks (including the cspell CI gate) run
+  on push. Awaiting maintainer review — no human feedback received yet.
+- _(This section will be updated as review comments come in and I push revisions.)_
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** Awaiting review
 
 ---
 
@@ -246,20 +315,51 @@ the documented endpoints) so the doc matches the current code.
 
 ### Technical Skills Gained
 
-[What you learned technically]
+- **Reading an unfamiliar production codebase to trace behavior.** I learned to
+  follow `azd`'s network calls from feature code down to the constants that define
+  each host, across ~20 Go files, without needing to run the binary.
+- **Matching a project's conventions.** I studied the existing reference docs and
+  reproduced their table style, callout syntax, and source-linking pattern instead
+  of imposing my own format — the single most useful habit for getting a PR merged.
+- **CI awareness.** I learned that "docs-only" still has to pass automated gates.
+  Discovering and satisfying the cspell dictionary was a small but real lesson in
+  reading a project's CI before assuming a change is complete.
+- **Git/PR hygiene:** a focused branch, a scoped diff, a Conventional-Commits
+  message, and a `Fixes #` trailer that auto-links the issue.
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+- **No Go toolchain locally.** I couldn't build the CLI, so I had to be confident
+  the doc was correct purely from reading source. I handled this by citing the
+  defining file for every host and re-running my reproduction greps to confirm I
+  hadn't missed one.
+- **The hidden cspell failure.** The change looked done, but CI would have failed
+  on unknown host names. Tracking that down and fixing it the project's way (shared
+  dictionary, not inline suppressions) was the main non-obvious hurdle.
+- **Deciding what to document vs. omit.** Runtime-constructed hosts and the
+  public-cloud Graph gotcha forced judgment calls about accuracy vs. clutter; I
+  resolved them with wildcards/placeholders and explicit notes.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+- **Check CI configuration first.** I'd read `.github/workflows` and the linting
+  config *before* writing, so I don't discover a gate like cspell after the fact.
+- **Comment on the issue before starting.** For a `good first issue`, a quick note
+  to the maintainer confirming the scope and proposed file location would reduce
+  the risk of a rework request during review.
 
 ---
 
 ## Resources Used
 
-- [Link to helpful documentation]
-- [Tutorial or Stack Overflow post that helped]
-- [GitHub issues or discussions that helped]
+- Azure `azure-dev` repository — `CONTRIBUTING.md` and `docs/README.md` conventions
+- Existing reference docs I used as templates: `docs/reference/telemetry-data.md`,
+  `docs/reference/environment-variables.md`
+- Source files traced for host constants: `cli/azd/pkg/cloud/cloud.go`,
+  `cli/azd/internal/telemetry/telemetry.go`,
+  `cli/azd/cmd/middleware/experimentation.go`, and the tool/template/extension
+  packages under `cli/azd/pkg/…`
+- GitHub docs on [Conventional Commits](https://www.conventionalcommits.org/) and
+  linking a PR to an issue with `Fixes #`
+- [cspell](https://cspell.org/) configuration reference (for `.vscode/cspell.misc.yaml`)
+- Original issue: https://github.com/Azure/azure-dev/issues/4415
