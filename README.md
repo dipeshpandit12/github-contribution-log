@@ -5,6 +5,7 @@
 **Issue:** [https://github.com/angular/components/issues/31937]  
 **Status:** [Phase IV] [Complete]
 
+Note: Somebody closed the ticket before I had the chance request the pull request, so I created the pull request in my forked repo itself. Here is the link [https://github.com/dipeshpandit12/components/pull/1] 
 ---
 
 ## Why I Chose This Issue
